@@ -1,15 +1,15 @@
 version: 2.1
 
-executors:
-  node:
-    docker:
-      - image: circleci/node:13.8.0
-  python:
-    docker:
-      - image: python:3.9.0-alpine
-  aws:
-    docker:
-      - image: amazon/aws-cli
+# executors:
+#   node:
+#     docker:
+#       - image: circleci/node:13.8.0
+#   python:
+#     docker:
+#       - image: python:3.9.0-alpine
+#   aws:
+#     docker:
+#       - image: amazon/aws-cli
 
 commands:
   destroy-environment:
@@ -25,6 +25,7 @@ commands:
           command: |
             # Your code here
             aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
 
   # revert-migrations:
   #   description: Revert the last migration if successfully run in the current workflow.
@@ -183,7 +184,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --region us-west-2 \
+              # --region us-west-2 \
               --tags project=udapeople
               # exit 1
       - run:
@@ -193,7 +194,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
-              --region us-west-2 \
+              # --region us-west-2 \
               --tags project=udapeople
               # exit 1
       - run:
@@ -201,7 +202,7 @@ jobs:
           command: |
             # Your code here
             aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --query "Reservations[*].Instances[*].PublicIpAddress" \
               --filters "Name=tag:Project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory
             cat inventory
@@ -361,9 +362,9 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # filters:
-          #   branches:
-          #     only: [test-feature-branch]
+          filters:
+            branches:
+              only: [test-feature-branch]
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
       # - run-migrations:
