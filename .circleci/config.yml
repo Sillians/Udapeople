@@ -184,10 +184,10 @@ jobs:
             aws cloudformation deploy \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --template-file .circleci/files/backend.yml \
-              --region ${AWS_DEFAULT_REGION} \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
-              # exit 1
+              # --region ${AWS_DEFAULT_REGION} \
+              
       # - run:
       #     name: Ensure front-end infrastructure exist
       #     command: |
