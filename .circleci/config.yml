@@ -176,7 +176,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --region us-west-2 \
+              --region ${AWS_DEFAULT_REGION} \
               --tags project=udapeople-backend
               # exit 1
               
@@ -210,35 +210,35 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
           event: on_fail    
 
-  configure-infrastructure:
-    docker:
-      # Docker image here that supports Ansible
-      - image: python:3.7-alpine3.11
-    steps:
-      # Checkout code from git
-      - checkout
-      # Add ssh keys with fingerprint
-      - add_ssh_keys:
-          fingerprints: []  # You can get this ID in the section where you registered the SSH Key
-      # attach workspace
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Install dependencies
-          working_directory: ./.circleci/ansible
-          command: |
-            # Your code here
-            apk add --update ansible
-            ansible --version
-            # exit 1
-      - run:
-          name: Configure server
-          working_directory: ./.circleci/ansible
-          command: |
-            # Your code here
+  # configure-infrastructure:
+  #   docker:
+  #     # Docker image here that supports Ansible
+  #     - image: python:3.7-alpine3.11
+  #   steps:
+  #     # Checkout code from git
+  #     - checkout
+  #     # Add ssh keys with fingerprint
+  #     - add_ssh_keys:
+  #         fingerprints: []  # You can get this ID in the section where you registered the SSH Key
+  #     # attach workspace
+  #     - attach_workspace:
+  #         at: ~/
+  #     - run:
+  #         name: Install dependencies
+  #         working_directory: ./.circleci/ansible
+  #         command: |
+  #           # Your code here
+  #           apk add --update ansible
+  #           ansible --version
+  #           # exit 1
+  #     - run:
+  #         name: Configure server
+  #         working_directory: ./.circleci/ansible
+  #         command: |
+  #           # Your code here
             
-            # exit 1
-      Here's where you will add some code to rollback on failure      
+  #           # exit 1
+  #     Here's where you will add some code to rollback on failure      
 
   # run-migrations:
   #   docker:
