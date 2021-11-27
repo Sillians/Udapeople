@@ -5,15 +5,18 @@ commands:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       # Add parameter here
-       workflow_id:
-         type: string
+      workflow_id:
+        type: string
+      event:
+        type: string
     steps:
       - run:
-          name: Destroy environments
+          name: Destroy environments << parameters.workflow_id >>
           when: on_fail
           command: |
             # Your code here
             echo "Destroying environment: <<parameters.workflow_id>> "
+            # aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
             aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
             # exit 1
@@ -165,9 +168,7 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      - run:
-          name: Install dependencies
-          command: yum install -y tar gzip
+      - run: yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -176,7 +177,7 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --region us-west-2 \
-              --tags project=udapeople
+              --tags project=udapeople-backend
               # exit 1
               
       - run:
@@ -185,8 +186,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --region us-west-2 \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+              --region us-west-2 \
               --tags project=udapeople
               # exit 1
       - run:
@@ -197,7 +198,8 @@ jobs:
               --query "Reservations[*].Instances[*].PublicIpAddress" \
               --filters "Name=tag:Project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory
-            cat inventory
+              # --output text >> .circleci/ansible/inventory.txt
+            # cat inventory
             # exit 1
       - persist_to_workspace:
           root: ~/
@@ -205,27 +207,38 @@ jobs:
             - project/.circleci/ansible/inventory.txt
       # Here's where you will add some code to rollback on failure 
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"    
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          event: on_fail    
 
-  # configure-infrastructure:
-  #   docker:
-  #     # Docker image here that supports Ansible
-
-  #   steps:
-  #     # Checkout code from git
-  #     # Add ssh keys with fingerprint
-  #     # attach workspace
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           # Your code here
-  #           exit 1
-  #     - run:
-  #         name: Configure server
-  #         command: |
-  #           # Your code here
-  #           exit 1
-  #     Here's where you will add some code to rollback on failure      
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: []  # You can get this ID in the section where you registered the SSH Key
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          working_directory: ./.circleci/ansible
+          command: |
+            # Your code here
+            apk add --update ansible
+            ansible --version
+            # exit 1
+      - run:
+          name: Configure server
+          working_directory: ./.circleci/ansible
+          command: |
+            # Your code here
+            
+            # exit 1
+      Here's where you will add some code to rollback on failure      
 
   # run-migrations:
   #   docker:
