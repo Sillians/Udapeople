@@ -197,8 +197,8 @@ jobs:
             aws ec2 describe-instances \
               --query "Reservations[*].Instances[*].PublicIpAddress" \
               --filters "Name=tag:Project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text >> inventory
-              # --output text >> .circleci/ansible/inventory.txt
+              # --output text >> inventory
+              --output text >> .circleci/ansible/inventory.txt
             cat inventory
             # exit 1
       - persist_to_workspace:
@@ -246,22 +246,31 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
           event: on_fail     
 
-  # run-migrations:
-  #   docker:
-  #     # Docker image here that supports NodeJS
-  #   steps:
-  #     # Checkout code from git
-  #     - run:
-  #         name: Run migrations
-  #         command: |
-  #           # Your code here
-  #           exit 1
-  #     - run:
-  #         name: Send migration results to memstash
-  #         command: |
-  #           # Your code here
-  #           exit 1
-     # Here's where you will add some code to rollback on failure      
+  run-migrations:
+    docker:
+      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
+    steps:
+      # Checkout code from git
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            # Your code here
+            cd backend
+            npm install
+            # Run and sve the migration output
+            npm run migrations > migrations_dump.txt
+            # exit 1
+      - run:
+          name: Send migration results to memstash
+          command: |
+            # Your code here
+            exit 1
+    #  Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          event: on_fail    
 
   # deploy-frontend:
   #   docker:
