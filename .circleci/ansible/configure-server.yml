@@ -1,7 +1,7 @@
 ---
-
+  # Name of the file
 - name: "configuration play." 
-  hosts: web
+  hosts: web 
   user: ubuntu
   become: true
   become_method: sudo
@@ -22,7 +22,8 @@
       become: true
       raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3)
       changed_when: false
-      
+    
+    - setup:
 
   # Get the environment variables from CircleCI and add to the EC2 instance
   environment:
@@ -37,6 +38,7 @@
     - TYPEORM_MIGRATIONS_DIR: "{{ lookup('env', 'TYPEORM_MIGRATIONS_DIR')}}"
     # Add more env vars here
 
+  # These are self-conatined "child" Playbooks that are used to bring modularity in complex orchestration.
   roles:
     # Your code here
     - configure-server

@@ -199,7 +199,7 @@ jobs:
               --filters "Name=tag:Project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory
               # --output text >> .circleci/ansible/inventory.txt
-            # cat inventory
+            cat inventory
             # exit 1
       - persist_to_workspace:
           root: ~/
@@ -237,14 +237,14 @@ jobs:
           working_directory: ./.circleci/ansible
           command: |
             # Your code here
-            cd .circleci/ansible
+            # cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
             
             # exit 1
       # Here's where you will add some code to rollback on failure
-      # - destroy-environment:
-      #     workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-      #     event: on_fail     
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+          event: on_fail     
 
   # run-migrations:
   #   docker:
