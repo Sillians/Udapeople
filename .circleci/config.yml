@@ -32,9 +32,11 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            # curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
-            SUCCESS = 1
-            if(( $SUCCESS==1 ));
+            SUCCESS = $(curl -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+            # SUCCESS = 1
+            echo $SUCCESS
+            # if(( $SUCCESS==1 ));
+            if [[ "$SUCCESS" == "success" ]]
             then
               cd ~/project/backend
               npm install
