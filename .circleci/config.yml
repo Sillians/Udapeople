@@ -24,15 +24,12 @@ commands:
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      when:
+      workflow_id:
         type: string
-      # id:
-      #   type: string 
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
-          # working_directory: ./backend
+          when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
             # curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
@@ -45,7 +42,7 @@ commands:
               # exit 1
               npm run migrations:revert
             fi
-          # when: << parameters.when >>
+          
       
 jobs:
   build-frontend:
