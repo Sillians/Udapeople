@@ -301,10 +301,10 @@ jobs:
                 --request PUT --data "1" \
                 https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             fi
-    - persist_to_workspace:
-          root: ~/project
-          paths:
-            - backend
+      - persist_to_workspace:
+            root: ~/project
+            paths:
+              - backend
     #  Here's where you will add some code to rollback on failure      
       # - revert-migrations:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
