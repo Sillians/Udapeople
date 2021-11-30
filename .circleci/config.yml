@@ -24,7 +24,11 @@ commands:
   # revert-migrations:
   #   description: Revert the last migration if successfully run in the current workflow.
   #   parameters:
-  #     # Add parameter here     
+  # #     # Add parameter here
+  #     workflow_id:
+  #       type: string
+  #     event:
+  #       type: string   
   #   steps:
   #     - run:
   #         name: Revert migrations
@@ -253,17 +257,38 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
-      - attach_workspace:
-          at: ~/
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: prepare environment for backend build
+          command: |
+            echo "Preparing environment for backend build"
+            echo ENVIRONMENT=$ENVIRONMENT >> backend/.env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt update
+            sudo apt install -y awscli
       - run:
           name: Run migrations
           command: |
             # Your code here
             cd backend
             npm install
-            # npm run build
+            npm run build
+            npm run migrations:revert
             # Run and sve the migration output
             npm run migrations > migrations_dump.txt
+            cat migration_dump.txt
             # exit 1
       - run:
           name: Send migration results to memstash
@@ -272,23 +297,32 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               echo "DB migration was successful, will update memstash..."
-              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "success" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             else
               echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
-              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "failure" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             fi
               echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
             # exit 1
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - backend
     #  Here's where you will add some code to rollback on failure      
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-          event: on_fail    
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   # deploy-frontend:
   #   docker:
   #     # Docker image here that supports AWS CLI
+  #     - image: amazon/aws-cli
   #   steps:
   #     # Checkout code from git
+  #     - checkout
+  #     - attach_workspace:
+  #         at: ~/
   #     - run:
   #         name: Install dependencies
   #         command: |
@@ -302,7 +336,7 @@ jobs:
   #     - run:
   #         name: Deploy frontend objects
   #         command: |
-            # your code here
+  #           your code here
       # Here's where you will add some code to rollback on failure      
                     
   # deploy-backend:
