@@ -21,29 +21,29 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
             # exit 1
 
-  revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    parameters:
-      workflow_id:
-        type: string
-    steps:
-      - run:
-          name: Revert migrations
-          when: on_fail
-          command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(curl -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
-            # SUCCESS = 1
-            echo $SUCCESS
-            # if(( $SUCCESS==1 ));
-            if [[ "$SUCCESS" == "success" ]]
-            then
-              cd ~/project/backend
-              npm install
-            # Add revert code here. You can find this in the Getting Started section.
-            # exit 1
-              npm run migrations:revert
-            fi
+  # revert-migrations:
+  #   description: Revert the last migration if successfully run in the current workflow.
+  #   parameters:
+  #     workflow_id:
+  #       type: string
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         when: on_fail
+  #         command: |
+  #           # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+  #           SUCCESS = $(curl -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+  #           # SUCCESS = 1
+  #           echo $SUCCESS
+  #           # if(( $SUCCESS==1 ));
+  #           if [[ "$SUCCESS" == "success" ]]
+  #           then
+  #             cd ~/project/backend
+  #             npm install
+  #           # Add revert code here. You can find this in the Getting Started section.
+  #           # exit 1
+  #             npm run migrations:revert
+  #           fi
           
       
 jobs:
@@ -164,8 +164,8 @@ jobs:
             npm install
             # npm install oauth-sign@^0.9.0
             # npm audit --audit-level=critical
-            # npm audit fix --audit-level=critical
-            npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical
+            # npm audit fix --audit-level=critical --force
 
   deploy-infrastructure:
     docker:
@@ -291,7 +291,6 @@ jobs:
             # Run and sve the migration output
             npm run migrations > migrations_dump.txt
             cat migration_dump.txt
-            # exit 1
       - run:
           name: Send migration results to memstash
           command: |
@@ -299,23 +298,26 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               echo "DB migration was successful, will update memstash..."
-              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
-            else
-              echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
-              curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
+                --request PUT --data "1" \
+                https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             fi
-              echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
-            # exit 1
-      - persist_to_workspace:
+    - persist_to_workspace:
           root: ~/project
           paths:
             - backend
     #  Here's where you will add some code to rollback on failure      
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # - revert-migrations:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail 
+            #   curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+            # else
+            #   echo "DB migration failed, please verify setup! Probably the database already exists. Verify setup!"
+            #   curl -H "Content-Type: text/plain" -H "token: b2cbb4c0-2dd0-4d86-b5c6-4610746e99ea" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              # echo "WorkflowID=${CIRCLE_WORKFLOW_ID:0:7}"
+            # exit 1
 
   # deploy-frontend:
   #   docker:
