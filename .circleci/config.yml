@@ -284,6 +284,7 @@ jobs:
             # Your code here
             cd backend
             npm install
+            npm fund
             npm install typescript
             npm --update install python3 npm
             npm run build
