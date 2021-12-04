@@ -285,10 +285,10 @@ jobs:
             cd backend
             npm install
             npm install typescript
-            # npm --update install python3 npm
+            npm --update install python3 npm
             npm run build
-            npm audit fix --force
-            npm audit fix --audit-level=critical
+            # npm audit fix --force
+            # npm audit fix --audit-level=critical
             npm run migrations:revert
             # Run and sve the migration output
             npm run migrations > migrations_dump.txt
