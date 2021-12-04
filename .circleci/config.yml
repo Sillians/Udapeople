@@ -321,6 +321,10 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - run:
+          name: Install tar/gzip utility
+          command: |
+            yum install -y tar gzip
       - attach_workspace:
           at: ~/
       - run:
@@ -331,11 +335,6 @@ jobs:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
-      - run:
-          name: Install tar/gzip utility
-          command: |
-            yum -y install tar
-            yum -y install gzip
       - run:
           name: Get backend url
           command: |
