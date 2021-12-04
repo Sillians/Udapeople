@@ -335,16 +335,6 @@ jobs:
             # apt-get install -y sudo
       - attach_workspace:
           at: ~/
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       # your code here
-      #       apt -y install unzip
-      #       apt-get install -y sudo
-      #       sudo apt-get update && sudo apt-get install -yy less
-      #       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      #       unzip awscliv2.zip
-      #       sudo ./aws/install
       - run:
           name: Get backend url
           command: |
@@ -381,14 +371,26 @@ jobs:
             - "bd:35:d1:82:bb:e3:ac:02:6d:92:ff:96:ef:1d:3e:93"
       # attach workspace
       - attach_workspace:
-          at: ~/
+          at: .circleci/ansible
       - run:
           name: Install dependencies
+          working_directory: ./.circleci/ansible
           command: |
             # your code here
+            apk add --no-cache \
+            python3 \
+            py3-pip \
+            && pip3 install --upgrade pip \
+            && pip3 install \
+            awscli \
+            && rm -rf /var/cache/apk/*
+            # apk add --update ansible
+            # apk add --update tar gzip curl
+            # apk add --update openssh-client
+            # apk add --update nodejs npm
             apk add --update ansible curl rsync openssh nodejs npm
             ansible --version
-            pip install awscli
+            # pip install awscli
             aws --version
       - run:
           name: Deploy backend
@@ -398,13 +400,19 @@ jobs:
             npm i
             npm run build
             cd ..
+      - run:
+          name: Zip the directory
+          command: |
             # Zip the directory
             tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          event: on_fail  
 
   # smoke-test:
   #   docker:
@@ -489,8 +497,8 @@ workflows:
           requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
