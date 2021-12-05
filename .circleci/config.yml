@@ -46,7 +46,7 @@ commands:
               npm run migrations:revert
               echo "roll back "
             fi
-              echo "revert migrations finish..."
+              echo "revert migrations finish... "
           
       
 jobs:
@@ -97,7 +97,6 @@ jobs:
       # Restore from cache
       - restore_cache: 
           keys: [frontend-test]
-      # Your job code here
       - run:
           name: Run frontend test
           command: |
@@ -106,6 +105,9 @@ jobs:
             npm install
             npm run test
             npm audit fix --audit-level=critical
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-test
 
                 
   test-backend:
@@ -118,7 +120,6 @@ jobs:
       # Restore from cache
       - restore_cache:
           keys: [backend-test]
-      # Your job code here
       - run:
           name: Run backend test
           command: |
@@ -126,6 +127,9 @@ jobs:
             cd backend
             npm install
             npm run test
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-test
             
   scan-frontend:
     docker:
@@ -143,11 +147,11 @@ jobs:
           command: | 
             cd frontend
             npm install
-            # npm install oauth-sign@^0.9.0
             # npm audit --audit-level=critical
             npm audit fix --audit-level=critical
-            # npm audit fix --audit-level=critical --force
-
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-scan
         
 
   scan-backend:
@@ -166,17 +170,17 @@ jobs:
           command: | 
             cd backend
             npm install
-            # npm install oauth-sign@^0.9.0
             # npm audit --audit-level=critical
             npm audit fix --audit-level=critical
-            # npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-scan
 
   deploy-infrastructure:
     docker:
     # Docker image here that supports AWS CLI
       - image: amazon/aws-cli
     steps:
-      # Checkout code from git
       - checkout
       - run: yum install -y tar gzip
       - run:
@@ -441,28 +445,28 @@ jobs:
             apk add --update curl nodejs npm
             pip install awscli
             aws --version
-      - run:
-          name: Get/Retrieve backend url
-          command: |
-            # your code here
-            export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
-      - run:
-          name: Backend smoke test.
-          command: |
-            export BACKEND_IP=$(curl -H "token: a959d0f9-c2a8-448c-ae41-5e8ed7804900" --request GET http://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "Backend API URL: "$API_URL
-            if curl "${API_URL}/api/status" | grep "ok"
-            then
-                return 0
-            else
-                return 1
-            fi
-            # echo ENVIRONMENT=production > "frontend/.env"
-            # echo NODE_ENV=production >> "frontend/.env"
-            # echo API_URL=$API_URL >> "frontend/.env" 
+      # - run:
+      #     name: Get/Retrieve backend url
+      #     command: |
+      #       # your code here
+      #       export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
+      #       export API_URL="http://${BACKEND_IP}:3030"
+      #       echo "${API_URL}"
+      # - run:
+      #     name: Backend smoke test.
+      #     command: |
+      #       export BACKEND_IP=$(curl -H "token: a959d0f9-c2a8-448c-ae41-5e8ed7804900" --request GET http://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
+      #       export API_URL="http://${BACKEND_IP}:3030"
+      #       echo "Backend API URL: "$API_URL
+      #       if curl "${API_URL}/api/status" | grep "ok"
+      #       then
+      #           return 0
+      #       else
+      #           return 1
+      #       fi
+      #       # echo ENVIRONMENT=production > "frontend/.env"
+      #       # echo NODE_ENV=production >> "frontend/.env"
+      #       # echo API_URL=$API_URL >> "frontend/.env" 
       - run:
           name: Frontend smoke test.
           command: |
