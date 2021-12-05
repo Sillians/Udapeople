@@ -26,6 +26,8 @@ commands:
     parameters:
       workflow_id:
         type: string
+      event:
+        type: string
     steps:
       - run:
           name: Revert migrations
@@ -311,11 +313,12 @@ jobs:
           paths:
             - backend
     #  Here's where you will add some code to rollback on failure      
-      # - revert-migrations:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail 
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          event: on_fail
 
   deploy-frontend:
     docker:
@@ -362,7 +365,7 @@ jobs:
           event: on_fail
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
-          when: on_fail
+          event: on_fail
                     
   deploy-backend:
     docker:
@@ -421,7 +424,7 @@ jobs:
           event: on_fail  
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
-          when: on_fail
+          event: on_fail
 
   smoke-test:
     docker:
@@ -480,7 +483,7 @@ jobs:
           event: on_fail
       - revert-migrations:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
-          when: on_fail
+          event: on_fail
 
   # cloudfront-update:
   #   docker:
