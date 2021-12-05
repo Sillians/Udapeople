@@ -31,6 +31,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
+            echo "revert migrations begins..."
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
             SUCCESS = $(curl -H "token:${CIRCLE_WORKFLOW_ID:0:7}" --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             echo $SUCCESS
@@ -41,7 +42,9 @@ commands:
             # Add revert code here. You can find this in the Getting Started section.
             # exit 1
               npm run migrations:revert
+              echo "roll back "
             fi
+              echo "revert migrations finish..."
           
       
 jobs:
@@ -183,7 +186,6 @@ jobs:
               --region ${AWS_DEFAULT_REGION} \
               --tags project=udapeople-backend
               # exit 1
-              
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -203,7 +205,8 @@ jobs:
               --filters "Name=tag:Project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory
               # --output text >> .circleci/ansible/inventory.txt
-            cat inventory
+            # cat inventory
+            cat .circleci/ansible/inventory.txt
             # exit 1
       - persist_to_workspace:
           root: ~/
@@ -356,7 +359,10 @@ jobs:
       # Here's where you will add some code to rollback on failure   
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-          event: on_fail  
+          event: on_fail
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
                     
   deploy-backend:
     docker:
@@ -413,6 +419,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail  
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
 
   smoke-test:
     docker:
@@ -438,29 +447,18 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            # your code here
-            # Fetch and prepare the BACKEND_IP env var
-            BACKEND_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --query "Reservations[*].Instances[*].PublicIpAddress" \
-              --output text)
-            echo "${BACKEND_IP}"
-            if curl "${BACKEND_IP}/api/status" | grep "ok"
+            export BACKEND_IP=$(curl -H "token: a959d0f9-c2a8-448c-ae41-5e8ed7804900" --request GET http://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "Backend API URL: "$API_URL
+            if curl "${API_URL}/api/status" | grep "ok"
             then
                 return 0
             else
                 return 1
             fi
-
-            # export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
-            # export API_URL="http://${BACKEND_IP}:3030"
-            # echo "${API_URL}"
-            # if curl "${API_URL}/api/status" | grep "ok"
-            # then
-            #     return 0
-            # else
-            #     return 1
-            # fi
+            # echo ENVIRONMENT=production > "frontend/.env"
+            # echo NODE_ENV=production >> "frontend/.env"
+            # echo API_URL=$API_URL >> "frontend/.env" 
       - run:
           name: Frontend smoke test.
           command: |
@@ -480,6 +478,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail
+      - revert-migrations:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
 
   # cloudfront-update:
   #   docker:
