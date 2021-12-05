@@ -23,13 +23,17 @@ commands:
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      when:
+        type: string
+      id:
+        type: string
     steps:
       - run:
           name: Revert migrations
-          when: on_fail
+          # when: on_fail
           command: |
-            SUCCESS = $(curl -H "token:${CIRCLE_WORKFLOW_ID:0:7}" \
-                      --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
+            SUCCESS = $(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET  https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}
             #  echo "************** SUCCESS = $SUCCESS"
             if (( $SUCCESS==1 ));
             then
@@ -312,7 +316,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail 
-      - revert-migrations
+      - revert-migrations:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
 
   deploy-frontend:
     docker:
@@ -357,7 +363,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail
-      - revert-migrations
+      - revert-migrations:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
                     
   deploy-backend:
     docker:
@@ -414,7 +422,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail  
-      - revert-migrations
+      - revert-migrations:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
 
   smoke-test:
     docker:
@@ -431,27 +441,20 @@ jobs:
             pip install awscli
             aws --version
       # - run:
-      #     name: Get/Retrieve backend url
-      #     command: |
-      #       # your code here
-      #       export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
-      #       export API_URL="http://${BACKEND_IP}:3030"
-      #       echo "${API_URL}"
-      # - run:
       #     name: Backend smoke test.
       #     command: |
-      #       export BACKEND_IP=$(curl -H "token: a959d0f9-c2a8-448c-ae41-5e8ed7804900" --request GET http://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
-      #       export API_URL="http://${BACKEND_IP}:3030"
-      #       echo "Backend API URL: "$API_URL
-      #       if curl "${API_URL}/api/status" | grep "ok"
-      #       then
-      #           return 0
-      #       else
-      #           return 1
-      #       fi
-      #       # echo ENVIRONMENT=production > "frontend/.env"
-      #       # echo NODE_ENV=production >> "frontend/.env"
-      #       # echo API_URL=$API_URL >> "frontend/.env" 
+            # export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            # export BACKEND_IP=$(aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text)
+            # echo http://${BACKEND_IP}:3030/api/status
+            # # Fetch and prepare the BACKEND_IP env var
+            # export API_URL="http://${BACKEND_IP}:3030"
+            # echo "${API_URL}"
+            # if curl "${API_URL}/api/status" | grep "ok"
+            # then
+            #     return 0
+            # else
+            #     return 1
+            # fi
       - run:
           name: Frontend smoke test.
           command: |
@@ -470,7 +473,9 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
           event: on_fail
-      - revert-migrations
+      - revert-migrations:
+          id: "${CIRCLE_WORKFLOW_ID:0:7}"        
+          when: on_fail
 
   # cloudfront-update:
   #   docker:
