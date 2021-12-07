@@ -549,7 +549,8 @@ workflows:
   deploy_and_notify:
     jobs:
       - build-frontend
-          context: slack-secrets
+          context: 
+            - slack-secrets
       - build-backend
       # - test-frontend:
       #     requires: [build-frontend]
