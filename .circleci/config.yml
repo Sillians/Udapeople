@@ -446,15 +446,15 @@ jobs:
             # else
             #     return 1
             # fi
-      - run:
-          name: Backend smoke test.
-          command: |
-            BACKEND_IP=$(aws ec2 describe-instances \
-                --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
-                --query "Reservations[*].Instances[*].PublicIpAddress" \
-                --output text)
-            echo "${BACKEND_IP}"
-            curl "http://${BACKEND_IP}:3030/api/status"
+      # - run:
+      #     name: Backend smoke test.
+      #     command: |
+      #       BACKEND_IP=$(aws ec2 describe-instances \
+      #           --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
+      #           --query "Reservations[*].Instances[*].PublicIpAddress" \
+      #           --output text)
+      #       echo "${BACKEND_IP}"
+      #       curl "http://${BACKEND_IP}:3030/api/status"
             # if curl "http://${BACKEND_IP}:3030/api/status" | grep "ok"
             # then
             #     return 0
