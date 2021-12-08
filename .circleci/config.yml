@@ -100,7 +100,7 @@ jobs:
             cd frontend
             npm install
             npm run test
-            # npm audit fix --audit-level=critical
+            npm audit fix --audit-level=critical
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-test
