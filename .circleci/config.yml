@@ -446,21 +446,15 @@ jobs:
             # else
             #     return 1
             # fi
-      # - run:
-      #     name: Backend smoke test.
-      #     command: |
-      #       BACKEND_IP=$(aws ec2 describe-instances \
-      #           --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
-      #           --query "Reservations[*].Instances[*].PublicIpAddress" \
-      #           --output text)
-      #       echo "${BACKEND_IP}"
-      #       curl "http://${BACKEND_IP}:3030/api/status"
-            # if curl "http://${BACKEND_IP}:3030/api/status" | grep "ok"
-            # then
-            #     return 0
-            # else
-            #     return 1
-            # fi
+      - run:
+          name: Backend smoke test.
+          command: |
+            export BACKEND_PUBLIC_DNS=$(curl -H "token: 71bb0348-9632-4668-bd3a-3c29d32a666f" --request GET http://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            BACKEND_API_URL="http://${BACKEND_PUBLIC_DNS}:3030/api/status"
+            echo "Backend API URL: "$BACKEND_API_URL
+            echo ENVIRONMENT=production > "frontend/.env"
+            echo NODE_ENV=production >> "frontend/.env"
+            echo API_URL=$BACKEND_API_URL >> "frontend/.env"  
       - run:
           name: Frontend smoke test.
           command: |
